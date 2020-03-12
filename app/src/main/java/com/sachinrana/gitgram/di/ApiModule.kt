@@ -6,6 +6,7 @@ import com.an.github.data.remote.interceptor.RequestInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.sachinrana.gitgram.data.remote.ApiService
+import com.sachinrana.gitgram.utils.LiveDataCallAdapterFactory
 import dagger.Module
 import dagger.Provides
 import okhttp3.Cache
@@ -57,9 +58,10 @@ class ApiModule {
     @Singleton
     internal fun provideRetrofit(gson: Gson, okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .baseUrl("https://api.github.com/")
+            .baseUrl("https://github-trending-api.now.sh/")
             .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addCallAdapterFactory(LiveDataCallAdapterFactory())
             .build()
     }
 

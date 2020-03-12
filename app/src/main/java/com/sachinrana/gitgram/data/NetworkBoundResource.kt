@@ -1,33 +1,34 @@
-
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import com.rifqimfahmi.foorballapps.vo.Resource
 import com.sachinrana.gitgram.ContextProviders
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 abstract class NetworkBoundResource<ResultType, RequestType>
 constructor(private val contextProviders: ContextProviders) {
 
-    private val result = MediatorLiveData<Resource<ResultType>>()
+    private val result = MutableLiveData<Resource<ResultType>>()
+    private val coroutineScope = CoroutineScope(contextProviders.IO)
 
-    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    suspend fun execute(): MutableLiveData<Resource<ResultType>> {
 
-    init {
-        result.value = Resource.loading(null)
-        val dbSource = loadFromDb()
-        result.addSource(dbSource) { data ->
-            result.removeSource(dbSource)
-            if (shouldFetch(data)) {
-                fetchFromNetwork(dbSource)
-            } else {
-                result.addSource(dbSource) { newData ->
-                    setValue(Resource.success(newData))
-                }
-            }
+        withContext(contextProviders.Main) {
+            result.value = Resource.loading(null)
         }
+
+        if (shouldFetch()) {
+            createCall().observeForever {
+                processResponse(it)
+            }
+
+        } else {
+            loadFromDb()
+        }
+
+
+
+        return result
     }
 
     private fun setValue(newValue: Resource<ResultType>) {
@@ -36,27 +37,6 @@ constructor(private val contextProviders: ContextProviders) {
         }
     }
 
-    private fun fetchFromNetwork(dbSource: LiveData<ResultType>) {
-        val apiResponse = createCall()
-        result.addSource(dbSource) { newData ->
-            setValue(Resource.loading(newData))
-        }
-
-        result.addSource(apiResponse) { response ->
-            result.removeSource(apiResponse)
-            result.removeSource(dbSource)
-
-            GlobalScope.launch(contextProviders.IO) {
-                saveCallResult(processResponse(response)!!)
-                GlobalScope.launch(contextProviders.Main) {
-                    result.addSource(loadFromDb()) { newData ->
-                        setValue(Resource.success(newData))
-                    }
-                }
-            }
-
-        }
-    }
 
     protected open fun onFetchFailed() {}
 
@@ -66,9 +46,9 @@ constructor(private val contextProviders: ContextProviders) {
 
     protected fun processResponse(response: Resource<RequestType>) = response.data
 
-    abstract fun createCall(): LiveData<Resource<RequestType>>
+    abstract suspend fun createCall(): LiveData<Resource<RequestType>>
 
-    protected abstract fun shouldFetch(data: ResultType?): Boolean
+    protected abstract fun shouldFetch(): Boolean
 
-    protected abstract fun loadFromDb(): LiveData<ResultType>
+    protected abstract suspend fun loadFromDb(): LiveData<ResultType>
 }

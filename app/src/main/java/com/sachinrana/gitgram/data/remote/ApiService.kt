@@ -1,18 +1,16 @@
 package com.sachinrana.gitgram.data.remote
 
-import androidx.lifecycle.LiveData
-import com.rifqimfahmi.foorballapps.vo.Resource
-import com.sachinrana.gitgram.data.remote.model.getRepoApiResponse
+import com.sachinrana.gitgram.data.local.entity.RepositoryEntity
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface ApiService {
 
-    @GET("search/repositories")
-     fun fetchRepositories(
-        @Query("sort") sort: String,
-        @Query("order") order: String,
-        @Query("page") page: Long
-    ): LiveData<Resource<getRepoApiResponse>>
+    @GET("repositories")
+    suspend fun fetchRepositories(
+        @Query("language") sort: String,
+        @Query("since") order: String,
+        @Query("spoken_language_code") page: String
+    ): List<RepositoryEntity>
 
 }

@@ -11,8 +11,8 @@ import com.sachinrana.gitgram.data.local.entity.RepositoryEntity
 interface RepositoryDao {
 
     @Insert(onConflict = REPLACE)
-     fun saveRepositories(repositories: List<RepositoryEntity>)
+    suspend fun saveRepositories(repositories: List<RepositoryEntity>)
 
     @Query("SELECT * FROM `repository` where page = :page")
-     fun getRepositoriesByPage(page: Long): LiveData<List<RepositoryEntity>>
+    fun getRepositoriesByPage(page: Long): LiveData<List<RepositoryEntity>>
 }

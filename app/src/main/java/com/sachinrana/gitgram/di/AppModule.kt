@@ -23,8 +23,8 @@ class AppModule(private val app: Application) {
     internal fun provideContextProviders()= ContextProviders.getInstance()
 
     @Provides
-    internal fun provideViewModelFactory(gitRepo: GetRepoRepository): ViewModelFactory {
-        return ViewModelFactory(app, gitRepo)
+    internal fun provideViewModelFactory(gitRepo: GetRepoRepository, contextProviders: ContextProviders): ViewModelFactory {
+        return ViewModelFactory(app, gitRepo, contextProviders)
     }
 
 
